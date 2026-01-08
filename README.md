@@ -9,9 +9,10 @@ The goal of the project is to help users track their mood and write short reflec
 
 - Next.js (App Router)
 - TypeScript
+- NextAuth (Google OAuth)
+- PostgreSQL
+- Prisma (ORM)
 - Tailwind CSS
-- MongoDB
-- NextAuth
 - Framer Motion
 
 ## Project Status
