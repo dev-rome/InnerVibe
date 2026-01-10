@@ -14,38 +14,46 @@ const createEntrySchema = z.object({
 });
 
 export async function GET() {
-  const user = await requireUser();
+  try {
+    const user = await requireUser();
 
-  const entries = await prisma.entry.findMany({
-    where: { userId: user.id },
-    orderBy: { occurredAt: "desc" },
-  });
+    const entries = await prisma.entry.findMany({
+      where: { userId: user.id },
+      orderBy: { occurredAt: "desc" },
+    });
 
-  return NextResponse.json({ entries });
+    return NextResponse.json({ entries });
+  } catch {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
 }
 
 export async function POST(req: Request) {
-  const user = await requireUser();
-  const body = await req.json();
-  const parsedBody = createEntrySchema.safeParse(body);
+  try {
+    const user = await requireUser();
+    const body = await req.json();
+    const parsedBody = createEntrySchema.safeParse(body);
 
-  if (!parsedBody.success) {
-    return NextResponse.json(
-      { error: parsedBody.error.message },
-      { status: 400 }
-    );
+    if (!parsedBody.success) {
+      return NextResponse.json(
+        { error: parsedBody.error.issues },
+        { status: 400 }
+      );
+    }
+
+    const { moodScore, journalText, occurredAt } = parsedBody.data;
+
+    const entry = await prisma.entry.create({
+      data: {
+        userId: user.id,
+        moodScore,
+        journalText,
+        occurredAt: occurredAt ? new Date(occurredAt) : undefined,
+      },
+    });
+
+    return NextResponse.json({ entry }, { status: 201 });
+  } catch {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
-
-  const { moodScore, journalText, occurredAt } = parsedBody.data;
-
-  const entry = await prisma.entry.create({
-    data: {
-      userId: user.id,
-      moodScore,
-      journalText,
-      occurredAt: occurredAt ? new Date(occurredAt) : undefined,
-    },
-  });
-
-  return NextResponse.json({ entry }, { status: 201 });
 }
